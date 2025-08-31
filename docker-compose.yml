@@ -1,0 +1,52 @@
+services:
+  api:
+    image: rarias1082/modular-express-redis-mysql:latest
+    container_name: api
+    restart: unless-stopped
+    env_file:
+      - ./server-test/.env.docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+  web:
+    build:
+      context: ./react-client
+      args:
+        # Same-origin base; Nginx in the web container proxies /api to api:8080
+        VITE_API_URL: /api
+        VITE_CSRF_PATH: /csrf
+        VITE_REGISTER_PATH: /register
+        VITE_LOGIN_PATH: /login
+    container_name: web
+    depends_on:
+      - api
+    ports:
+      - "8081:80"
+
+volumes:
+  redisdata:
+  mysqldata:
