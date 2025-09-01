@@ -30,7 +30,7 @@ services:
       MYSQL_ROOT_PASSWORD: rootpass
     volumes:
       - mysqldata:/var/lib/mysql
-      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./server-test/sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
 
   web:
     build:
