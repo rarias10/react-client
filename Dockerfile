@@ -21,20 +21,12 @@ RUN npm run build
 # --- Runtime stage (Nginx) --------------------------------------------------
 FROM nginx:1.27-alpine
 
-# Create non-root user
-RUN addgroup -S nginx && adduser -S nginx -G nginx
-
 # Put built assets
 RUN rm -rf /usr/share/nginx/html/*
-COPY --from=build --chown=nginx:nginx /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Use your custom nginx.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Security headers
-RUN echo 'add_header X-Frame-Options DENY;' >> /etc/nginx/conf.d/security.conf && \
-    echo 'add_header X-Content-Type-Options nosniff;' >> /etc/nginx/conf.d/security.conf
-
-USER nginx
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
