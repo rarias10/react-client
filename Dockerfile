@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install deps
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production --no-audit
+RUN npm ci --no-audit
 
 # Build app with Vite env args
 COPY . .
