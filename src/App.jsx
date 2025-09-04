@@ -5,7 +5,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import { useSelector } from 'react-redux'
 export default function App() {
-  const isAuth = useSelector(s => s.auth.isAuthenticated)
+  const isAuth = useSelector(state => state.auth.isAuthenticated)
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: 16 }}>
       <NavBar/>

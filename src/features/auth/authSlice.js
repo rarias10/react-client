@@ -7,10 +7,13 @@ export const fetchCsrf = createAsyncThunk(
   'auth/fetchCsrf',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(paths.csrf); // GET /api/csrf (withCredentials=true via api instance)
+      const { data } = await api.get(paths.csrf);
       const token = data?.csrfToken;
-      if (token) setCsrfHeader(token);             // sets default 'X-CSRF-Token' header
-      return token;
+      if (token && typeof token === 'string' && token.length > 10) {
+        setCsrfHeader(token);
+        return token;
+      }
+      return rejectWithValue({ error: 'invalid_csrf_token' });
     } catch (err) {
       return rejectWithValue(err?.response?.data || { error: 'csrf_failed' });
     }
@@ -23,11 +26,12 @@ export const registerUser = createAsyncThunk(
     try {
       // Properly dispatch the CSRF fetch through Redux
       await thunkAPI.dispatch(fetchCsrf()).unwrap();
-    } catch {
-      // If fetching the token fails, we can still try; server will 403 if truly missing
+    } catch (csrfError) {
+      console.warn('CSRF token fetch failed:', csrfError);
+      // Continue anyway - server will reject if CSRF is required
     }
     try {
-      const { data } = await api.post(paths.register, payload, { withCredentials: true });
+      const { data } = await api.post(paths.register, payload);
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.response?.data || { error: 'Registration failed' });
@@ -40,9 +44,11 @@ export const loginUser = createAsyncThunk(
   async (payload, thunkAPI) => {
     try {
       await thunkAPI.dispatch(fetchCsrf()).unwrap();
-    } catch {}
+    } catch (csrfError) {
+      console.warn('CSRF token fetch failed:', csrfError);
+    }
     try {
-      const { data } = await api.post(paths.login, payload, { withCredentials: true });
+      const { data } = await api.post(paths.login, payload);
       return data; // { ok: true, user: {...} }
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.response?.data || { error: 'Login failed' });
